@@ -21,7 +21,7 @@ int
 main(int argc, char* argv[])
 {
 	RunyuApp app;
-	app.Run()
+	app.Run();
 	
 	return 0;
 }

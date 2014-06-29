@@ -28,6 +28,11 @@
 #include <GroupLayout.h>
 #include <TextControl.h>
 #include <Button.h>
+#include <Roster.h>
+
+static const uint32 kMsgUpdateDictionary = 'updd';
+static const uint32 kMsgLearnNavi = 'lnvi';
+static const uint32 kMsgAboutRunyu = 'abtr';
 
 RunyuWindow::RunyuWindow(BRect frame, const char* title)
 	: BWindow(frame, title, B_TITLED_WINDOW,
@@ -36,6 +41,27 @@ RunyuWindow::RunyuWindow(BRect frame, const char* title)
 	// Create window view & layout
 	BGroupLayout* layout = new BGroupLayout(B_VERTICAL, 0);
 	SetLayout(layout);
+
+	// Add menubar
+	BMenuBar *menuBar = new BMenuBar("menu");
+	layout->AddView(menuBar);
+	
+	// File menu
+	BMenu* fileMenu = new BMenu("File");
+	fileMenu->AddItem(new BMenuItem("Update Dictionary",
+		new BMessage(kMsgUpdateDictionary), 'U'));
+	fileMenu->AddSeparatorItem();
+	fileMenu->AddItem(new BMenuItem("Quit",
+		new BMessage(B_QUIT_REQUESTED), 'Q'));
+	menuBar->AddItem(fileMenu);
+	
+	// Help menu
+	BMenu* helpMenu = new BMenu("Help");
+	helpMenu->AddItem(new BMenuItem("Learn Na'vi",
+		new BMessage(kMsgLearnNavi)));
+	helpMenu->AddItem(new BMenuItem("About Runyu",
+		new BMessage(kMsgAboutRunyu)));
+	menuBar->AddItem(helpMenu);
 	
 	fLayout = new BGroupLayout(B_VERTICAL);
 	fLayout->SetInsets(B_USE_DEFAULT_SPACING, B_USE_DEFAULT_SPACING,
@@ -85,7 +111,28 @@ RunyuWindow::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
 		case kMessageSearch:
+		{
 			_SearchForWord(searchInput->Text());
+			break;
+		}	
+		case kMsgLearnNavi:
+		{			
+			// Is there a nicer way to do this?
+			entry_ref ref;
+			if (get_ref_for_path("/bin/open", &ref))
+				return;
+			const char* args[] = { "/bin/open", "https://learnnavi.org/", NULL};
+			be_roster->Launch(&ref, 2, args);
+			break;
+		}
+		
+		case kMsgAboutRunyu:
+		{
+			// This should use AboutWindow.h which is part of interface kit
+			// however I can't figure how to get it compiled with the
+			// #include <AboutWindow.h>
+			break;
+		}
 		
 		default:
 			message->PrintToStream();
