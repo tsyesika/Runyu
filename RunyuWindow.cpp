@@ -17,6 +17,7 @@
 #include "RunyuWindow.h"
 
 #include <Application.h>
+#include <Locale.h>
 #include <File.h>
 #include <ControlLook.h>
 #include <GridView.h>
@@ -97,6 +98,7 @@ RunyuWindow::_SearchForWord(const char* word)
 	// Open the dictionary and start looking for the word
 	results->SetText("Searching...");
 	
-	BFile* dictionary = new BFile("/boot/home/config/settings/runyu-dictionary-en.txt", 0);
-	results->SetText(word);
+	// Open wordlist
+	const BLocale* locale = BLocale::Default();
+	results->SetText(locale->GetString(0));
 }

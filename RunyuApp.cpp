@@ -15,20 +15,53 @@
  *  along with Runyu.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <Application.h>
+#include "RunyuApp.h"
 #include "RunyuWindow.h"
 
-const char* appSignature = "application/x-vnd.Runyu";
+#include <Directory.h>
+#include <FindDirectory.h>
+#include <Path.h>
+#include <Entry.h>
 
-int
-main(int argc, char* argv[])
+const char* kRunyuAppSig = "application/x-vnd.Runyu";
+
+RunyuApp::RunyuApp()
+	: BApplication(kRunyuAppSig)
 {
-	BApplication app(appSignature);
+}
+
+RunyuApp::~RunyuApp()
+{
+}
+
+void
+RunyuApp::ReadyToRun()
+{
+	// Create directory for data.
+	BPath 			path;
+	BDirectory 		dir;
+	BEntry			entry;
+	
+	if (find_directory(B_USER_SETTINGS_DIRECTORY, &path, true) == B_OK)
+	{
+		dir.SetTo(path.Path());
+		
+		if (dir.FindEntry("Runyu", &entry) == B_NO_ERROR)
+			dir.SetTo(&entry);
+		else
+			dir.CreateDirectory("Runyu", &dir);	
+	}
 	
 	// Create a window
 	BWindow* runyuWindow = new RunyuWindow(BRect(100, 100, 700, 500), "Runyu");
 	runyuWindow->Show();
-	
-	app.Run();
-	return 0;
+}
+
+void
+RunyuApp::MessageReceived(BMessage *message)
+{
+	switch (message->what) {
+		default:
+			BApplication::MessageReceived(message);
+	}
 }
