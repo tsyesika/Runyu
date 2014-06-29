@@ -26,6 +26,9 @@ class RunyuApp : public BApplication {
 		virtual		~RunyuApp();
 		void		ReadyToRun();
 		void		MessageReceived(BMessage *message);
+	
+	private:
+		void		_UpdateDictionary();
 
 };
 

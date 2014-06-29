@@ -14,33 +14,26 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Runyu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _RUNYU_WINDOW_H
-#define _RUNYU_WINDOW_H
+
+#ifndef _STATUSWINDOW_H
+#define _STATUSWINDOW_H
 
 #include <Window.h>
 #include <GroupLayout.h>
-#include <TextControl.h>
+#include <StatusBar.h>
 
-static const uint32 kMessageSearch = 'srch';
-static const uint32 kMsgUpdateDictionary = 'updd';
-static const uint32 kMsgLearnNavi = 'lnvi';
-static const uint32 kMsgAboutRunyu = 'abtr';
+static const uint32 kMessageProgressUpdate = 'prgu';
 
-class RunyuWindow : public BWindow {
+class StatusWindow : public BWindow {
 	public:
-						RunyuWindow(BRect frame, const char* title);
-		virtual			~RunyuWindow();
-		virtual void	MessageReceived(BMessage* message);
-		virtual	bool	QuitRequested();
-
-	private:
-		void			_InitWindow();
-		void			_SearchForWord(const char*);
+							StatusWindow(BRect frame);
+		virtual				~StatusWindow();
+		virtual void		MessageReceived(BMessage* message);
+		virtual bool		QuitRequested();		
 	
 	private:
-		BGroupLayout*	fLayout;
-		BTextView*		results;
-		BTextControl*	searchInput;
+		BGroupLayout*		fLayout;
+		BStatusBar*			fProgressBar;
 };
 
-#endif // _RUNYU_WINDOW_H
+#endif

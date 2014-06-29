@@ -30,10 +30,6 @@
 #include <Button.h>
 #include <Roster.h>
 
-static const uint32 kMsgUpdateDictionary = 'updd';
-static const uint32 kMsgLearnNavi = 'lnvi';
-static const uint32 kMsgAboutRunyu = 'abtr';
-
 RunyuWindow::RunyuWindow(BRect frame, const char* title)
 	: BWindow(frame, title, B_TITLED_WINDOW,
 		B_NOT_ZOOMABLE | B_AVOID_FRONT, B_ALL_WORKSPACES | B_QUIT_ON_WINDOW_CLOSE | B_CLOSE_ON_ESCAPE)
@@ -135,7 +131,10 @@ RunyuWindow::MessageReceived(BMessage* message)
 		}
 		
 		default:
-			message->PrintToStream();
+		{
+			be_app->PostMessage(message);
+			break;
+		}
 	}
 }
 

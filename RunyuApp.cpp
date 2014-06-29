@@ -17,11 +17,14 @@
 
 #include "RunyuApp.h"
 #include "RunyuWindow.h"
+#include "StatusWindow.h"
 
+#include <Alert.h>
 #include <Directory.h>
 #include <FindDirectory.h>
 #include <Path.h>
 #include <Entry.h>
+#include <LocaleRoster.h>
 
 const char* kRunyuAppSig = "application/x-vnd.Runyu";
 
@@ -61,7 +64,35 @@ void
 RunyuApp::MessageReceived(BMessage *message)
 {
 	switch (message->what) {
+		case kMsgUpdateDictionary:
+		{
+			// Update the dictionary
+			_UpdateDictionary();
+			break;
+		}
+		
 		default:
 			BApplication::MessageReceived(message);
 	}
+}
+
+void
+RunyuApp::_UpdateDictionary()
+{
+	// Found out preferred language.
+	BMessage preferredLanguages;
+	BLocaleRoster::Default()->GetPreferredLanguages(&preferredLanguages);
+	const char* language = preferredLanguages.GetString("language", "en");
+	
+	// TODO: display status window.
+	StatusWindow* statusWindow = new StatusWindow(BRect(200, 200, 550, 250));
+	statusWindow->Show();
+	
+	// Download the latest dictionary
+	
+	// Store dictionary
+	
+	// Destroy Status window.
+	
+	
 }
