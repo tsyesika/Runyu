@@ -15,6 +15,7 @@
  *  along with Runyu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "RunyuWindow.h"
+#include "WordListFile.h"
 
 #include <Application.h>
 #include <Locale.h>
@@ -28,7 +29,9 @@
 #include <GroupLayout.h>
 #include <TextControl.h>
 #include <Button.h>
+#include <LocaleRoster.h>
 #include <Roster.h>
+#include <String.h>
 
 RunyuWindow::RunyuWindow(BRect frame, const char* title)
 	: BWindow(frame, title, B_TITLED_WINDOW,
@@ -97,8 +100,8 @@ RunyuWindow::~RunyuWindow()
 bool
 RunyuWindow::QuitRequested()
 {
-	BWindow::Quit();
 	be_app->PostMessage(B_QUIT_REQUESTED);
+	Hide();
 	return true;
 }
 
@@ -132,7 +135,7 @@ RunyuWindow::MessageReceived(BMessage* message)
 		
 		default:
 		{
-			be_app->PostMessage(message);
+			BWindow::MessageReceived(message);
 			break;
 		}
 	}
@@ -144,7 +147,58 @@ RunyuWindow::_SearchForWord(const char* word)
 	// Open the dictionary and start looking for the word
 	results->SetText("Searching...");
 	
-	// Open wordlist
-	const BLocale* locale = BLocale::Default();
-	results->SetText(locale->GetString(0));
+	// Get preferred language
+	BMessage preferredLanguages;
+	BLocaleRoster::Default()->GetPreferredLanguages(&preferredLanguages);
+	const char* firstLanguage;
+	if (preferredLanguages.FindString("language", &firstLanguage) != B_OK) {
+		firstLanguage = "en"; // Fallback to english
+	}
+	
+	// Now open word list.
+	// TODO: Check if file exists if not pick next available language else or error
+	// TODO: Move to BPath?
+	BString basePath("/boot/home/config/settings/Runyu/");
+	
+	BString naviPath(basePath);
+	naviPath += "nvi.words";
+	
+	BString localPath(basePath);
+	localPath += firstLanguage;
+	localPath += ".words";
+	
+	WordListFile naviDict = WordListFile(naviPath.String());
+	WordListFile localDict = WordListFile(localPath.String());
+	
+	// Now search through both dictionaries looking for the word
+	int lineno = 0;
+	bool foundWord = false;
+	BString currentWord;
+	BString definition;
+	
+	while (true)
+	{
+		naviDict.ReadWord(currentWord);
+		
+		// If it's empty then we've finished
+		if (currentWord.Length() == 0)
+			break;
+		
+		if (currentWord == word) {
+			// Found it!
+			localDict.ReadLine(definition, lineno);
+			results->SetText(definition.String());
+			foundWord = true;
+		}
+		
+		lineno++;
+	}
+	
+	
+	if (!foundWord) {
+		BString error(word);
+		error += " can't be found in the dictionary.";
+		error.Capitalize();
+		results->SetText(error.String());
+	}
 }
