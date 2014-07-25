@@ -36,6 +36,7 @@ class RunyuWindow : public BWindow {
 	private:
 		void			_InitWindow();
 		void			_SearchForWord(const char*);
+		void			_WriteDefinition(BString &definition);
 	
 	private:
 		BGroupLayout*	fLayout;

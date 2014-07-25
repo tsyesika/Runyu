@@ -84,13 +84,13 @@ RunyuApp::_UpdateDictionary()
 	BLocaleRoster::Default()->GetPreferredLanguages(&preferredLanguages);
 	const char* language = preferredLanguages.GetString("language", "en");
 	
-	// TODO: display status window.
 	StatusWindow* statusWindow = new StatusWindow(BRect(200, 200, 550, 250));
 	statusWindow->Show();
 	
 	// Download the latest dictionary
+	statusWindow->SetProgress(0, "Looking up dictionaries");
 	
-	// Store dictionary
+	
 	
 	// Destroy Status window.
 	

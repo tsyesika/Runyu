@@ -29,7 +29,9 @@ class StatusWindow : public BWindow {
 							StatusWindow(BRect frame);
 		virtual				~StatusWindow();
 		virtual void		MessageReceived(BMessage* message);
-		virtual bool		QuitRequested();		
+		virtual bool		QuitRequested();
+		
+		void				SetProgress(int progress, const char* status);
 	
 	private:
 		BGroupLayout*		fLayout;

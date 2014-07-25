@@ -57,6 +57,12 @@ StatusWindow::MessageReceived(BMessage* message)
 	}
 }
 
+void
+StatusWindow::SetProgress(int progress, const char* status)
+{
+	fProgressBar->SetTo(progress, NULL, status);
+}
+
 bool
 StatusWindow::QuitRequested()
 {

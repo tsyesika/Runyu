@@ -32,6 +32,11 @@
 #include <LocaleRoster.h>
 #include <Roster.h>
 #include <String.h>
+#include <Font.h>
+#include <Alert.h>
+#include <Entry.h>
+#include <Directory.h>
+#include <Url.h>
 
 RunyuWindow::RunyuWindow(BRect frame, const char* title)
 	: BWindow(frame, title, B_TITLED_WINDOW,
@@ -115,13 +120,17 @@ RunyuWindow::MessageReceived(BMessage* message)
 			break;
 		}	
 		case kMsgLearnNavi:
-		{			
+		{
+			BUrl learnnavi("https://learnnavi.org/");
+			learnnavi.OpenWithPreferredApplication();
+			
+			
 			// Is there a nicer way to do this?
-			entry_ref ref;
+			/*entry_ref ref;
 			if (get_ref_for_path("/bin/open", &ref))
 				return;
 			const char* args[] = { "/bin/open", "https://learnnavi.org/", NULL};
-			be_roster->Launch(&ref, 2, args);
+			be_roster->Launch(&ref, 2, args); */
 			break;
 		}
 		
@@ -130,6 +139,12 @@ RunyuWindow::MessageReceived(BMessage* message)
 			// This should use AboutWindow.h which is part of interface kit
 			// however I can't figure how to get it compiled with the
 			// #include <AboutWindow.h>
+			break;
+		}
+		
+		case kMsgUpdateDictionary:
+		{
+			be_app->MessageReceived(message);
 			break;
 		}
 		
@@ -144,8 +159,7 @@ RunyuWindow::MessageReceived(BMessage* message)
 void
 RunyuWindow::_SearchForWord(const char* word)
 {
-	// Open the dictionary and start looking for the word
-	results->SetText("Searching...");
+	BString searchTerm(word);
 	
 	// Get preferred language
 	BMessage preferredLanguages;
@@ -156,44 +170,52 @@ RunyuWindow::_SearchForWord(const char* word)
 	}
 	
 	// Now open word list.
-	// TODO: Check if file exists if not pick next available language else or error
-	// TODO: Move to BPath?
-	BString basePath("/boot/home/config/settings/Runyu/");
+	BDirectory basePath("/boot/home/config/settings/Runyu/");
+	const BEntry naviPath(&basePath, "nvi.words");
 	
-	BString naviPath(basePath);
-	naviPath += "nvi.words";
+	BString fileName(firstLanguage); fileName += ".words";
+	const BEntry localPath(&basePath, fileName.String());
 	
-	BString localPath(basePath);
-	localPath += firstLanguage;
-	localPath += ".words";
-	
-	WordListFile naviDict = WordListFile(naviPath.String());
-	WordListFile localDict = WordListFile(localPath.String());
-	
-	// Now search through both dictionaries looking for the word
-	int lineno = 0;
-	bool foundWord = false;
-	BString currentWord;
-	BString definition;
-	
-	while (true)
-	{
-		naviDict.ReadWord(currentWord);
+	// Check that both exist, if not display an error.
+	if (!(localPath.Exists() && naviPath.Exists())) {
+		BAlert* notFoundError = new BAlert("Dictionary Not Found",
+			"The dictionaries have not been found so a search cannot run.",
+			"OK",
+			NULL,
+			NULL,
+			B_WIDTH_AS_USUAL,
+			B_STOP_ALERT);
 		
-		// If it's empty then we've finished
-		if (currentWord.Length() == 0)
-			break;
+		notFoundError->SetShortcut(0, B_ESCAPE);
+		notFoundError->Go();
 		
-		if (currentWord == word) {
-			// Found it!
-			localDict.ReadLine(definition, lineno);
-			results->SetText(definition.String());
-			foundWord = true;
-		}
-		
-		lineno++;
+		delete notFoundError;
+		return;
 	}
 	
+	// Put information that we're searching.
+	results->SetText("Searching...");
+	
+	WordListFile naviDict = WordListFile(&naviPath);
+	WordListFile localDict = WordListFile(&localPath);
+	
+	// Now search through both dictionaries looking for the word
+	BString definition;
+	bool foundWord = false;
+	long long lineno;
+	
+	
+	if ((lineno = naviDict.FindWord(searchTerm)) != -1) {
+		foundWord = true;
+		localDict.ReadLine(definition, lineno);
+		_WriteDefinition(definition);
+	}
+	
+	if ((lineno = localDict.FindWord(searchTerm)) != -1) {
+		foundWord = true;
+		naviDict.ReadLine(definition, lineno);
+		_WriteDefinition(definition);
+	}
 	
 	if (!foundWord) {
 		BString error(word);
@@ -201,4 +223,12 @@ RunyuWindow::_SearchForWord(const char* word)
 		error.Capitalize();
 		results->SetText(error.String());
 	}
+}
+
+void
+RunyuWindow::_WriteDefinition(BString &definition)
+{
+	// TODO: Format this better (indent from side
+	definition.Capitalize();
+	results->SetText(definition.String());
 }
