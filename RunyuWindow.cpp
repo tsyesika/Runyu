@@ -90,6 +90,8 @@ RunyuWindow::RunyuWindow(BRect frame, const char* title)
 	results = new BTextView("results");
 	results->MakeEditable(false);
 	results->MakeSelectable(true);
+	results->SetStylable(true);
+	results->SetInsets(10, 10, 10, 10);
 	
 	fLayout->AddView(results);
 	
@@ -121,16 +123,15 @@ RunyuWindow::MessageReceived(BMessage* message)
 		}	
 		case kMsgLearnNavi:
 		{
-			BUrl learnnavi("https://learnnavi.org/");
-			learnnavi.OpenWithPreferredApplication();
-			
+			//BUrl learnnavi("https://learnnavi.org/");
+			//learnnavi.OpenWithPreferredApplication();
 			
 			// Is there a nicer way to do this?
-			/*entry_ref ref;
+			entry_ref ref;
 			if (get_ref_for_path("/bin/open", &ref))
 				return;
 			const char* args[] = { "/bin/open", "https://learnnavi.org/", NULL};
-			be_roster->Launch(&ref, 2, args); */
+			be_roster->Launch(&ref, 2, args);
 			break;
 		}
 		
@@ -172,6 +173,7 @@ RunyuWindow::_SearchForWord(const char* word)
 	// Now open word list.
 	BDirectory basePath("/boot/home/config/settings/Runyu/");
 	const BEntry naviPath(&basePath, "nvi.words");
+	const BEntry naviIpaPath(&basePath, "nvi.ipa");
 	
 	BString fileName(firstLanguage); fileName += ".words";
 	const BEntry localPath(&basePath, fileName.String());
@@ -197,24 +199,27 @@ RunyuWindow::_SearchForWord(const char* word)
 	results->SetText("Searching...");
 	
 	WordListFile naviDict = WordListFile(&naviPath);
+	WordListFile naviIpa = WordListFile(&naviIpaPath);
 	WordListFile localDict = WordListFile(&localPath);
 	
 	// Now search through both dictionaries looking for the word
 	BString definition;
+	BString ipa;
 	bool foundWord = false;
 	long long lineno;
-	
 	
 	if ((lineno = naviDict.FindWord(searchTerm)) != -1) {
 		foundWord = true;
 		localDict.ReadLine(definition, lineno);
-		_WriteDefinition(definition);
+		ipa.SetTo("");
+		_WriteDefinition(definition, ipa, searchTerm);
 	}
 	
 	if ((lineno = localDict.FindWord(searchTerm)) != -1) {
 		foundWord = true;
 		naviDict.ReadLine(definition, lineno);
-		_WriteDefinition(definition);
+		naviIpa.ReadLine(ipa, lineno);
+		_WriteDefinition(definition, ipa, searchTerm);
 	}
 	
 	if (!foundWord) {
@@ -226,9 +231,53 @@ RunyuWindow::_SearchForWord(const char* word)
 }
 
 void
-RunyuWindow::_WriteDefinition(BString &definition)
+RunyuWindow::_WriteDefinition(BString& definition, BString& ipa, BString& meaning)
 {
-	// TODO: Format this better (indent from side
+	results->SetText("");
 	definition.Capitalize();
-	results->SetText(definition.String());
+	
+	// Write out definition.	
+	BFont font;
+	font.SetSize(20.0);
+	
+	text_run run;
+	run.font = font;
+	run.offset = 0;
+	run.color.red = 0;
+	run.color.green = 0;
+	run.color.blue = 0;
+	run.color.alpha = 255;
+	
+	text_run_array runArray;
+	runArray.count = 1;
+	runArray.runs[0] = run;
+	
+	results->Insert(definition.String(), &runArray);
+	
+	// Add IPA
+	results->Insert(" ");
+	
+	runArray.runs[0].font.SetFace(B_ITALIC_FACE);
+	runArray.runs[0].color.red = 187;
+	runArray.runs[0].color.green = 187;
+	runArray.runs[0].color.blue = 187;
+	
+	results->Insert("(", &runArray);
+	results->Insert(ipa, &runArray);
+	results->Insert(")", &runArray);
+	
+	// Add the meaning
+	results->Insert("\n\t");
+	
+	runArray.runs[0].color.red = 0;
+	runArray.runs[0].color.blue = 0;
+	runArray.runs[0].color.green = 0;
+	runArray.runs[0].font.SetFace(B_BOLD_FACE);
+	runArray.runs[0].font.SetSize(12.0);
+	
+	results->Insert("Meaning: ", &runArray);
+	
+	runArray.runs[0].font.SetFace(B_REGULAR_FACE);
+	
+	results->Insert(meaning.String(), &runArray);
 }
